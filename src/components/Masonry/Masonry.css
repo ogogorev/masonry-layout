@@ -1,0 +1,22 @@
+.masonry {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-auto-rows: 10px;
+  gap: 20px;
+}
+
+.item {
+  background-color: grey;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.line {
+  position: fixed;
+
+  width: 100%;
+  border: solid 1px rgba(255, 0, 0, 0.5);
+}
