@@ -1,6 +1,6 @@
 .masonry {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   grid-auto-rows: 10px;
   gap: 20px;
 }
@@ -19,4 +19,12 @@
 
   width: 100%;
   border: solid 1px rgba(255, 0, 0, 0.5);
+}
+
+.debug-info {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+
+  font-size: 1.5rem;
 }
