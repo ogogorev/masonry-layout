@@ -1,59 +1,24 @@
-import { FC, forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 
 import "./Masonry.css";
-
-const OFFSET = 0;
-
-type MasonryItemProps = {
-  item: any;
-  index: number;
-  onIntersect?: (entry: any, index: number) => void;
-};
-
-// const MasonryItem: FC<MasonryItemProps> = ({ item, index, onIntersect }) => {
-const MasonryItem: FC<MasonryItemProps> = forwardRef(
-  ({ item, index, onIntersect, color }, ref) => {
-    // console.log("render item", ref);
-
-    return (
-      <div
-        key={item.id}
-        id={item.id}
-        ref={ref}
-        className="item"
-        style={{
-          gridRow: `${item.gridRow[0]} / ${item.gridRow[1]}`,
-          gridColumn: item.gridCol,
-          backgroundColor: color ? color : undefined,
-        }}
-      >
-        {item.id}
-      </div>
-    );
-  }
-);
-
-const STEP = 20 + 10;
-const BATCH_SIZE = 10;
-
-type MasonryItemType = {
-  id: string;
-  height: number;
-};
+import { MasonryItem } from "./types";
+import { MASONRY_BATCH_SIZE, MASONRY_OFFSET, MASONRY_STEP } from "./consts";
 
 type MasonryProps = {
-  batchSize?: number;
-  items: Array<MasonryItemType>;
+  items: Array<{ id: string; height: number }>;
   onLastReached: () => void;
+  batchSize?: number;
+  offset?: number;
 };
 
 let lastScrollPosition = 0;
 let scrollDirection = "down";
 
 export const MasonryLayout: FC<MasonryProps> = ({
-  batchSize = BATCH_SIZE,
   items: itemsSrc,
   onLastReached,
+  batchSize = MASONRY_BATCH_SIZE,
+  offset = MASONRY_OFFSET,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -67,8 +32,8 @@ export const MasonryLayout: FC<MasonryProps> = ({
   const [beforeLast, setBeforeLast] = useState(batchSize);
   const [last, setLast] = useState(batchSize);
 
-  const items: any[] | undefined = useMemo(() => {
-    if (!containerRef.current) return undefined;
+  const items: MasonryItem[] = useMemo(() => {
+    if (!containerRef.current) return [];
 
     const gridComputedStyle = window.getComputedStyle(containerRef.current);
 
@@ -84,22 +49,14 @@ export const MasonryLayout: FC<MasonryProps> = ({
       return columns.indexOf(Math.min(...columns));
     };
 
-    // items
-    //   .slice(start, end)
-    //   .map(({ gridRow }) => gridRow)
-    //   .forEach((gridRow) => {
-    //     const minI = getMinColI();
-    //     columns[minI] += gridRow;
-    //   });
-
-    const newItems = [];
+    const newItems: MasonryItem[] = [];
 
     itemsSrc.forEach((item, i) => {
       const minI = getMinColI();
       const gridCol = minI + 1;
       const gridRowStart = columns[minI];
 
-      const gridRowSpan = Math.round(item.height / STEP);
+      const gridRowSpan = Math.round(item.height / MASONRY_STEP);
 
       columns[minI] += gridRowSpan;
 
@@ -136,7 +93,7 @@ export const MasonryLayout: FC<MasonryProps> = ({
 
       console.log({ afterFirstRect });
 
-      const isIntersecting = afterFirstRect.bottom >= OFFSET;
+      const isIntersecting = afterFirstRect.bottom >= offset;
 
       console.log("down", { isIntersecting, bottom: afterFirstRect.bottom });
 
@@ -150,7 +107,7 @@ export const MasonryLayout: FC<MasonryProps> = ({
       if (!firstRef.current) return;
 
       const firstRect = firstRef.current.getBoundingClientRect();
-      const isIntersecting = firstRect.bottom >= OFFSET;
+      const isIntersecting = firstRect.bottom >= offset;
 
       if (isIntersecting) {
         const nextFirst = Math.max(first - batchSize, 0);
@@ -169,7 +126,7 @@ export const MasonryLayout: FC<MasonryProps> = ({
 
       const rect2 = lastRef.current.getBoundingClientRect();
 
-      const isIntersecting = rect2.top <= window.innerHeight - OFFSET;
+      const isIntersecting = rect2.top <= window.innerHeight - offset;
 
       if (isIntersecting) {
         const nextLast = Math.min(last + batchSize, items.length);
@@ -187,7 +144,7 @@ export const MasonryLayout: FC<MasonryProps> = ({
       if (!beforeLastRef.current) return;
 
       const rect1 = beforeLastRef.current.getBoundingClientRect();
-      const isIntersecting = rect1.top <= window.innerHeight - OFFSET;
+      const isIntersecting = rect1.top <= window.innerHeight - offset;
 
       if (!isIntersecting) {
         setLast(beforeLast);
@@ -205,7 +162,7 @@ export const MasonryLayout: FC<MasonryProps> = ({
   useEffect(() => {
     console.log("useEffect");
 
-    const handleScroll = (event: any) => {
+    const handleScroll = (event: Event) => {
       console.log("scroll", { event }, window.scrollY);
 
       if (window.scrollY < lastScrollPosition) {
@@ -234,36 +191,46 @@ export const MasonryLayout: FC<MasonryProps> = ({
   });
 
   const getRefByIndex = (index: number) => {
-    if (index === afterFirst) return [afterFirstRef, "green"];
-    if (index === first) return [firstRef, "green"];
-    if (index === last - 1) return [lastRef, "blue"];
-    if (index === beforeLast - 1) return [beforeLastRef, "blue"];
-    return [];
+    if (index === afterFirst) return afterFirstRef;
+    if (index === first) return firstRef;
+    if (index === last - 1) return lastRef;
+    if (index === beforeLast - 1) return beforeLastRef;
+  };
+
+  // Needed for debug
+  const getColorByIndex = (index: number) => {
+    if (index === afterFirst) return "green";
+    if (index === first) return "green";
+    if (index === last - 1) return "blue";
+    if (index === beforeLast - 1) return "blue";
   };
 
   return (
     <>
       <div ref={containerRef} id="grid" className="masonry">
-        {items &&
-          items.map((item, i) => {
-            if (i < first || i > last) return null;
+        {items.map((item, i) => {
+          if (i < first || i > last) return null;
 
-            const [ref, color] = getRefByIndex(i);
-
-            return (
-              <MasonryItem
-                key={item.id}
-                index={i}
-                item={item}
-                color={color}
-                ref={ref}
-              />
-            );
-          })}
+          return (
+            <div
+              key={item.id}
+              id={item.id}
+              ref={getRefByIndex(i)}
+              className="item"
+              style={{
+                gridRow: `${item.gridRow[0]} / ${item.gridRow[1]}`,
+                gridColumn: item.gridCol,
+                backgroundColor: getColorByIndex(i),
+              }}
+            >
+              {item.id}
+            </div>
+          );
+        })}
       </div>
 
-      <div className="line" style={{ top: `${OFFSET}px` }}></div>
-      <div className="line" style={{ bottom: `${OFFSET}px` }}></div>
+      <div className="line" style={{ top: `${offset}px` }}></div>
+      <div className="line" style={{ bottom: `${offset}px` }}></div>
 
       <div className="debug-info">
         Rendered items from {first} to {last}
