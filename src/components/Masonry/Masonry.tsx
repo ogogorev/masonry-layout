@@ -1,8 +1,10 @@
 import { FC, useEffect, useMemo, useRef, useState } from "react";
 
-import "./Masonry.css";
+import { ScrollState, useScrollListener } from "../../hooks/useScrollListener";
 import { MasonryItem } from "./types";
 import { MASONRY_BATCH_SIZE, MASONRY_OFFSET, MASONRY_STEP } from "./consts";
+
+import "./Masonry.css";
 
 type MasonryProps = {
   items: Array<{ id: string; height: number }>;
@@ -10,9 +12,6 @@ type MasonryProps = {
   batchSize?: number;
   offset?: number;
 };
-
-let lastScrollPosition = 0;
-let scrollDirection = "down";
 
 export const MasonryLayout: FC<MasonryProps> = ({
   items: itemsSrc,
@@ -76,10 +75,9 @@ export const MasonryLayout: FC<MasonryProps> = ({
     return newItems;
   }, [containerRef.current, itemsSrc]);
 
-  const checkIntersections = () => {
+  const checkIntersections = ({ direction: scrollDirection }: ScrollState) => {
     console.log(
       "checkIntersections",
-      scrollDirection,
       firstRef,
       afterFirstRef,
       beforeLastRef,
@@ -153,35 +151,13 @@ export const MasonryLayout: FC<MasonryProps> = ({
     }
   };
 
+  const scrollState = useScrollListener(checkIntersections);
+
   useEffect(() => {
     if (lastRef.current) {
-      checkIntersections();
+      checkIntersections(scrollState);
     }
   }, [beforeLastRef.current, lastRef.current, checkIntersections]);
-
-  useEffect(() => {
-    console.log("useEffect");
-
-    const handleScroll = (event: Event) => {
-      console.log("scroll", { event }, window.scrollY);
-
-      if (window.scrollY < lastScrollPosition) {
-        scrollDirection = "up";
-      } else {
-        scrollDirection = "down";
-      }
-
-      lastScrollPosition = window.scrollY;
-
-      checkIntersections();
-    };
-
-    window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [checkIntersections]);
 
   console.log("Masonry rendered", {
     itemsSrc,
