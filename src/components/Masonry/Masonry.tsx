@@ -191,9 +191,11 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
     if (debugInfo && childrenNumber) {
       console.log({ debugInfo: debugInfo.innerHTML });
-      debugInfo.innerHTML =
-        debugInfo.innerHTML.replace(/\<br\> DOM: .*$/, "") +
-        `<br> DOM: ${childrenNumber}`;
+      debugInfo.innerHTML = `
+        Rendered items from ${first} to ${last}
+        <br />
+        DOM: ${childrenNumber}
+        `;
     }
   });
 
@@ -220,9 +222,7 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
       <div className="line" style={{ top: `${offset}px` }}></div>
       <div className="line" style={{ bottom: `${offset}px` }}></div>
 
-      <div className="debug-info">
-        Rendered items from {first} to {last}
-      </div>
+      <div className="debug-info"></div>
     </>
   );
 };
