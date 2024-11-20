@@ -1,13 +1,21 @@
+import { PhotoData } from "./api/pexels/types";
+import { PexelsImage } from "./components/Image/PexelsImage";
 import { MasonryLayout } from "./components/Masonry/Masonry";
 // import { Sandbox } from "./components/Sandbox/Sandbox";
-import { useItems } from "./api/mock";
+import { useCuratedPhotos } from "./hooks/useCuratedPhotos";
 
 function App() {
-  const { items, loadNextPage } = useItems();
+  const { photos, fetchNextPage } = useCuratedPhotos(20);
+
+  console.log("App rendered", { photos });
 
   return (
     <>
-      <MasonryLayout items={items} onLastReached={loadNextPage} />
+      <MasonryLayout
+        items={photos}
+        onLastReached={fetchNextPage}
+        renderItem={PexelsImage}
+      />
       {/* <Sandbox /> */}
     </>
   );

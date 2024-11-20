@@ -19,6 +19,7 @@ export type PhotoData = {
   };
   liked: boolean;
   alt: string;
+  timestamp: number;
 };
 
 export type PhotosResponse = {

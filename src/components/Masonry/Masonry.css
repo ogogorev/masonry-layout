@@ -25,6 +25,7 @@
   position: fixed;
   top: 20px;
   right: 20px;
+  background: grey;
 
   font-size: 1.5rem;
 }

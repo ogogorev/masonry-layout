@@ -1,6 +1,12 @@
 export type MasonryItem = {
-  id: string;
+  id: number;
+  width: number;
   height: number;
-  gridCol: number;
-  gridRow: [number, number];
+  // Added timestamp here to be able to generate more precise ids
+  timestamp: number;
+};
+
+export type MasonryItemContainer<ItemT extends MasonryItem> = {
+  gridArea: string;
+  item: ItemT;
 };

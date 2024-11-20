@@ -1,24 +1,26 @@
-import { FC, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ScrollState, useScrollListener } from "../../hooks/useScrollListener";
-import { MasonryItem } from "./types";
+import { MasonryItem, MasonryItemContainer } from "./types";
 import { MASONRY_BATCH_SIZE, MASONRY_OFFSET, MASONRY_STEP } from "./consts";
 
 import "./Masonry.css";
 
-type MasonryProps = {
-  items: Array<{ id: string; height: number }>;
-  onLastReached: () => void;
+type MasonryProps<ItemT extends MasonryItem> = {
+  items: ItemT[];
+  renderItem: (item: ItemT) => JSX.Element;
   batchSize?: number;
   offset?: number;
+  onLastReached: () => void;
 };
 
-export const MasonryLayout: FC<MasonryProps> = ({
+export const MasonryLayout = <ItemT extends MasonryItem>({
   items: itemsSrc,
+  renderItem,
   onLastReached,
   batchSize = MASONRY_BATCH_SIZE,
   offset = MASONRY_OFFSET,
-}) => {
+}: MasonryProps<ItemT>) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const firstRef = useRef<HTMLDivElement>(null);
@@ -31,7 +33,7 @@ export const MasonryLayout: FC<MasonryProps> = ({
   const [beforeLast, setBeforeLast] = useState(batchSize);
   const [last, setLast] = useState(batchSize);
 
-  const items: MasonryItem[] = useMemo(() => {
+  const items: MasonryItemContainer<ItemT>[] = useMemo(() => {
     if (!containerRef.current) return [];
 
     const gridComputedStyle = window.getComputedStyle(containerRef.current);
@@ -39,6 +41,7 @@ export const MasonryLayout: FC<MasonryProps> = ({
     const columnStrings = gridComputedStyle
       .getPropertyValue("grid-template-columns")
       .split(" ");
+    const columnWidth = Number(columnStrings[0].slice(0, -2));
     const columnCount = columnStrings.length;
 
     const columns = Array(columnCount).fill(1);
@@ -48,27 +51,36 @@ export const MasonryLayout: FC<MasonryProps> = ({
       return columns.indexOf(Math.min(...columns));
     };
 
-    const newItems: MasonryItem[] = [];
+    const newItems: MasonryItemContainer<ItemT>[] = [];
 
     itemsSrc.forEach((item, i) => {
       const minI = getMinColI();
       const gridCol = minI + 1;
       const gridRowStart = columns[minI];
 
-      const gridRowSpan = Math.round(item.height / MASONRY_STEP);
+      const ratio = item.width / item.height;
+      const height = columnWidth / ratio;
+
+      const gridRowSpan = Math.ceil(height / MASONRY_STEP);
 
       columns[minI] += gridRowSpan;
 
       const gridRowEnd = gridRowStart + gridRowSpan;
 
-      if (i === 0) {
-        console.log("items", { minI, gridRowStart, gridRowEnd, gridRowSpan });
-      }
+      const gridArea = `${gridRowStart} / ${gridCol} / ${gridRowEnd} / ${
+        gridCol + 1
+      }`;
+
+      // if (i === 0) {
+      //   console.log("calc", { item, ratio, columnWidth, gridRowSpan, height });
+      // }
 
       newItems.push({
-        ...item,
-        gridCol,
-        gridRow: [gridRowStart, gridRowEnd],
+        gridArea,
+        item: {
+          ...item,
+          id: `${item.id}-${item.timestamp}-${i}`, // TODO: Fix how ids are generated
+        },
       });
     });
 
@@ -173,33 +185,33 @@ export const MasonryLayout: FC<MasonryProps> = ({
     if (index === beforeLast - 1) return beforeLastRef;
   };
 
-  // Needed for debug
-  const getColorByIndex = (index: number) => {
-    if (index === afterFirst) return "green";
-    if (index === first) return "green";
-    if (index === last - 1) return "blue";
-    if (index === beforeLast - 1) return "blue";
-  };
+  useEffect(() => {
+    const childrenNumber = document.querySelectorAll("#grid > div")?.length;
+    const debugInfo = document.querySelector(".debug-info");
+
+    if (debugInfo && childrenNumber) {
+      console.log({ debugInfo: debugInfo.innerHTML });
+      debugInfo.innerHTML =
+        debugInfo.innerHTML.replace(/\<br\> DOM: .*$/, "") +
+        `<br> DOM: ${childrenNumber}`;
+    }
+  });
 
   return (
     <>
       <div ref={containerRef} id="grid" className="masonry">
-        {items.map((item, i) => {
+        {items.map((itemContainer, i) => {
           if (i < first || i > last) return null;
 
           return (
             <div
-              key={item.id}
-              id={item.id}
+              key={itemContainer.item.id}
               ref={getRefByIndex(i)}
-              className="item"
               style={{
-                gridRow: `${item.gridRow[0]} / ${item.gridRow[1]}`,
-                gridColumn: item.gridCol,
-                backgroundColor: getColorByIndex(i),
+                gridArea: itemContainer.gridArea,
               }}
             >
-              {item.id}
+              {renderItem(itemContainer.item)}
             </div>
           );
         })}

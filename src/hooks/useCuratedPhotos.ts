@@ -28,7 +28,7 @@ export const useCuratedPhotos = (pageSize: number) => {
       console.log({ response });
 
       setPhotos((prevPhotos) => {
-        const fetchTimestamp = String(Date.now());
+        const fetchTimestamp = Date.now();
 
         return [
           ...prevPhotos,
