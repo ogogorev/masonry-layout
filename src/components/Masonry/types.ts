@@ -8,5 +8,6 @@ export type MasonryItem = {
 
 export type MasonryItemContainer<ItemT extends MasonryItem> = {
   gridArea: string;
+  key: string;
   item: ItemT;
 };

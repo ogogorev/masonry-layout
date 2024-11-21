@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { PexelsImage } from "../Image/PexelsImage";
 import { PhotoData } from "../../api/pexels/types";
 import { fetchPhoto } from "../../api/pexels/photos";
 
 export const PhotoDetails = () => {
+  const navigate = useNavigate();
   const { photoId } = useParams();
 
   const [photoData, setPhotoData] = useState<PhotoData | undefined>();
@@ -29,13 +30,41 @@ export const PhotoDetails = () => {
     }
   }, [photoId]);
 
+  const navigateBack = () => {
+    navigate(-1);
+  };
+
+  const { photographer, photographer_url, alt } = photoData || {};
+  const date = new Date(
+    Math.floor(Math.random() * Date.now()),
+  ).toLocaleDateString();
+
   return (
     <div>
       {loading && "Loading..."}
-
-      {photoData && <PexelsImage imageData={photoData} />}
-
       {error && error}
+
+      {photoData && (
+        <div>
+          <button type="button" onClick={navigateBack}>
+            Return to gallery
+          </button>
+          <div>
+            <h1>{alt}</h1>
+
+            <p>
+              Author:{" "}
+              <a href={photographer_url} target="_blank">
+                {photographer}
+              </a>
+            </p>
+
+            <span>{date} (random)</span>
+          </div>
+
+          <PexelsImage imageData={photoData} />
+        </div>
+      )}
     </div>
   );
 };

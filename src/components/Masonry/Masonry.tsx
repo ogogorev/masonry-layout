@@ -77,9 +77,9 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
       newItems.push({
         gridArea,
+        key: `${item.id}-${item.timestamp}-${i}`, // TODO: Fix how ids are generated
         item: {
           ...item,
-          id: `${item.id}-${item.timestamp}-${i}`, // TODO: Fix how ids are generated
         },
       });
     });
@@ -93,7 +93,7 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
       firstRef,
       afterFirstRef,
       beforeLastRef,
-      lastRef
+      lastRef,
     );
 
     if (scrollDirection === "down") {
@@ -207,7 +207,7 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
           return (
             <div
-              key={itemContainer.item.id}
+              key={itemContainer.key}
               ref={getRefByIndex(i)}
               style={{
                 gridArea: itemContainer.gridArea,
