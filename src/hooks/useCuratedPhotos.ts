@@ -38,6 +38,7 @@ export const useCuratedPhotos = (pageSize: number) => {
       });
       setNextPage(response.next_page);
 
+      // TODO: Use finally here
       updateLoading(false);
     } catch (e) {
       // ... handle errors here

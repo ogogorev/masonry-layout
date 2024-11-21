@@ -1,4 +1,3 @@
-import { PhotoData } from "./api/pexels/types";
 import { PexelsImage } from "./components/Image/PexelsImage";
 import { MasonryLayout } from "./components/Masonry/Masonry";
 // import { Sandbox } from "./components/Sandbox/Sandbox";
@@ -14,7 +13,7 @@ function App() {
       <MasonryLayout
         items={photos}
         onLastReached={fetchNextPage}
-        renderItem={PexelsImage}
+        renderItem={(imageData) => <PexelsImage imageData={imageData} />}
       />
       {/* <Sandbox /> */}
     </>
