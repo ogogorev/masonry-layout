@@ -5,6 +5,7 @@ type PexelsImageProps = {
   imageData: PhotoData;
 };
 
+// TODO: Rename to photo
 export const PexelsImage: FC<PexelsImageProps> = ({ imageData }) => {
-  return <img src={imageData.src.small} style={{ width: "100%" }} />;
+  return <img src={imageData.src.small} />;
 };
