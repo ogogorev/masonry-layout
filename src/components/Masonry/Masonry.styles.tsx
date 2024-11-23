@@ -1,11 +1,18 @@
 import { css } from "@linaria/core";
 import { styled } from "@linaria/react";
 
-export const MasonryStyled = styled.div`
+export const MasonryStyled = styled.div<{
+  minColumnWidth: number;
+  rowHeight: number;
+  columnGap: number;
+}>`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  grid-auto-rows: 10px;
-  gap: 20px;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(${({ minColumnWidth }) => minColumnWidth}px, 1fr)
+  );
+  grid-auto-rows: ${({ rowHeight }) => rowHeight}px;
+  column-gap: ${({ columnGap }) => columnGap}px;
 `;
 
 export const MasonryItemStyled = styled.div<{ gridArea: string }>`

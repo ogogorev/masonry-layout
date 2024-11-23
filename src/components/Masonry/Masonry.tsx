@@ -1,25 +1,32 @@
 import { useEffect, useMemo, useRef } from "react";
+import { useStore } from "@nanostores/react";
 
 import { ScrollState, useScrollListener } from "../../hooks/useScrollListener";
 import { MasonryItem, MasonryItemContainer } from "./types";
-import { MASONRY_BATCH_SIZE, MASONRY_OFFSET, MASONRY_STEP } from "./consts";
-
+import {
+  MASONRY_BATCH_SIZE,
+  MASONRY_MIN_COLUMN_WIDTH,
+  MASONRY_GAP,
+  MASONRY_OFFSET,
+  MASONRY_ROW_HEIGHT,
+} from "./consts";
+import { getState } from "./store";
 import {
   debugInfo as debugInfoClassName,
   MasonryItemStyled,
   MasonryStyled,
   OffsetLine,
 } from "./Masonry.styles";
-import { useStore } from "@nanostores/react";
-import { getState } from "./store";
 
 type MasonryProps<ItemT extends MasonryItem> = {
   items: ItemT[];
   renderItem: (item: ItemT) => JSX.Element;
   batchSize?: number;
-  offset?: number;
   onLastReached: () => void;
   stateKey: string;
+  offset?: number;
+  gap?: number;
+  minColumnWidth?: number;
 };
 
 export const MasonryLayout = <ItemT extends MasonryItem>({
@@ -29,6 +36,8 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
   batchSize = MASONRY_BATCH_SIZE,
   offset = MASONRY_OFFSET,
   stateKey,
+  gap = MASONRY_GAP,
+  minColumnWidth = MASONRY_MIN_COLUMN_WIDTH,
 }: MasonryProps<ItemT>) => {
   const { $first, $afterFirst, $beforeLast, $last } = getState(stateKey, {
     first: 0,
@@ -78,7 +87,8 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
       const ratio = item.width / item.height;
       const height = columnWidth / ratio;
 
-      const gridRowSpan = Math.ceil(height / MASONRY_STEP);
+      const gridRowSpan =
+        Math.ceil(height / MASONRY_ROW_HEIGHT) + gap / MASONRY_ROW_HEIGHT;
 
       columns[minI] += gridRowSpan;
 
@@ -87,10 +97,6 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
       const gridArea = `${gridRowStart} / ${gridCol} / ${gridRowEnd} / ${
         gridCol + 1
       }`;
-
-      // if (i === 0) {
-      //   console.log("calc", { item, ratio, columnWidth, gridRowSpan, height });
-      // }
 
       newItems.push({
         gridArea,
@@ -246,7 +252,13 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
   return (
     <>
-      <MasonryStyled ref={containerRef} id="grid">
+      <MasonryStyled
+        ref={containerRef}
+        id="grid"
+        columnGap={gap}
+        rowHeight={MASONRY_ROW_HEIGHT}
+        minColumnWidth={minColumnWidth}
+      >
         {items.map((itemContainer, i) => {
           if (i < first || i > last) return null;
 
