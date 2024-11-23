@@ -12,6 +12,7 @@ export const Photos = () => {
       items={photos}
       onLastReached={fetchNextPage}
       renderItem={(photoData) => <MasonryPhotoWrapper photoData={photoData} />}
+      stateKey="curatedPhotos"
     />
   );
 };

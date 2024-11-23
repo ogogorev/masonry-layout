@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { ScrollState, useScrollListener } from "../../hooks/useScrollListener";
 import { MasonryItem, MasonryItemContainer } from "./types";
@@ -10,6 +10,8 @@ import {
   MasonryStyled,
   OffsetLine,
 } from "./Masonry.styles";
+import { useStore } from "@nanostores/react";
+import { getState } from "./store";
 
 type MasonryProps<ItemT extends MasonryItem> = {
   items: ItemT[];
@@ -17,6 +19,7 @@ type MasonryProps<ItemT extends MasonryItem> = {
   batchSize?: number;
   offset?: number;
   onLastReached: () => void;
+  stateKey: string;
 };
 
 export const MasonryLayout = <ItemT extends MasonryItem>({
@@ -25,18 +28,27 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
   onLastReached,
   batchSize = MASONRY_BATCH_SIZE,
   offset = MASONRY_OFFSET,
+  stateKey,
 }: MasonryProps<ItemT>) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { $first, $afterFirst, $beforeLast, $last } = getState(stateKey, {
+    first: 0,
+    afterFirst: 0,
+    beforeLast: batchSize - 1,
+    last: batchSize - 1,
+  });
+
+  const first = useStore($first);
+  const afterFirst = useStore($afterFirst);
+  const beforeLast = useStore($beforeLast);
+  const last = useStore($last);
 
   const firstRef = useRef<HTMLDivElement>(null);
   const afterFirstRef = useRef<HTMLDivElement>(null);
-  const [first, setFirst] = useState(0);
-  const [afterFirst, setAfterFirst] = useState(0);
 
   const beforeLastRef = useRef<HTMLDivElement>(null);
   const lastRef = useRef<HTMLDivElement>(null);
-  const [beforeLast, setBeforeLast] = useState(batchSize - 1);
-  const [last, setLast] = useState(batchSize - 1);
+
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const items: MasonryItemContainer<ItemT>[] = useMemo(() => {
     if (!containerRef.current) return [];
@@ -190,10 +202,10 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
       newLast = newBeforeLast + 1;
     }
 
-    if (newFirst !== first) setFirst(newFirst);
-    if (newAfterFirst !== afterFirst) setAfterFirst(newAfterFirst);
-    if (newBeforeLast !== beforeLast) setBeforeLast(newBeforeLast);
-    if (newLast !== last) setLast(newLast);
+    if (newFirst !== first) $first.set(newFirst);
+    if (newAfterFirst !== afterFirst) $afterFirst.set(newAfterFirst);
+    if (newBeforeLast !== beforeLast) $beforeLast.set(newBeforeLast);
+    if (newLast !== last) $last.set(newLast);
   };
 
   const scrollState = useScrollListener(checkIntersections);
