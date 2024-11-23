@@ -1,48 +1,41 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
+import { atom } from "nanostores";
+import { useStore } from "@nanostores/react";
+
 import { PhotoData, PhotosResponse } from "../api/pexels/types";
 import { fetchCuratedPhotos, fetchUrl } from "../api/pexels/photos";
 
+const $photos = atom<PhotoData[]>([]);
+const $nextPage = atom<string>("");
+const $loading = atom(false);
+
 export const useCuratedPhotos = (pageSize: number) => {
-  const [photos, setPhotos] = useState<PhotoData[]>([]);
-  const [nextPage, setNextPage] = useState<string>();
-  const [loading, setLoading] = useState(false);
-
-  // This internal state is needed to make sure that scroll events (that at some point piped directly to "fetchNextPage")
-  // do not cause sending multiple requests in small amount of time
-  // Using useRef to update loading state immediately. useState is not enough.
-  const _loading = useRef(false);
-
-  const updateLoading = (loading: boolean) => {
-    setLoading(loading);
-    _loading.current = loading;
-  };
+  const photos = useStore($photos);
+  const nextPage = useStore($nextPage);
+  const loading = useStore($loading);
 
   const fetch = async (fetchFn: () => Promise<PhotosResponse>) => {
-    if (loading || _loading.current) return;
+    if ($loading.get()) return;
 
     try {
-      updateLoading(true);
+      $loading.set(true);
 
       const response = await fetchFn();
 
       console.log({ response });
 
-      setPhotos((prevPhotos) => {
-        const fetchTimestamp = Date.now();
+      const fetchTimestamp = Date.now();
 
-        return [
-          ...prevPhotos,
-          // TODO: Temporary solution, needed for ids
-          ...response.photos.map((p) => ({ ...p, timestamp: fetchTimestamp })),
-        ];
-      });
-      setNextPage(response.next_page);
-
-      // TODO: Use finally here
-      updateLoading(false);
+      $photos.set([
+        ...$photos.get(),
+        // TODO: Adding timestamp here is a temporary solution, needed for ids
+        ...response.photos.map((p) => ({ ...p, timestamp: fetchTimestamp })),
+      ]);
+      $nextPage.set(response.next_page);
     } catch (e) {
       // ... handle errors here
-      updateLoading(false);
+    } finally {
+      $loading.set(false);
     }
   };
 
