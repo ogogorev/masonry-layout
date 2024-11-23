@@ -5,7 +5,7 @@ import { MasonryPhotoWrapper } from "./MasonryPhotoWrapper";
 export const Photos = () => {
   const { photos, fetchNextPage } = useCuratedPhotos(20);
 
-  console.log("App rendered", { photos });
+  console.log("Photos rendered", { photos });
 
   return (
     <MasonryLayout

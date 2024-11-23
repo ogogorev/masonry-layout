@@ -93,6 +93,8 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
   }, [containerRef.current, itemsSrc]);
 
   const checkIntersections = ({ direction: scrollDirection }: ScrollState) => {
+    // return;
+
     console.log(
       "checkIntersections",
       firstRef,

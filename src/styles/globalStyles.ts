@@ -16,6 +16,8 @@ export const globalStyles = css`
       min-height: 100vh;
       max-height: 100vh;
       min-height: -webkit-fill-available;
+
+      overflow-y: scroll;
     }
   }
 `;
