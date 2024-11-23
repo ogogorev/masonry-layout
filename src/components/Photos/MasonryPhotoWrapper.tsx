@@ -15,7 +15,7 @@ export const MasonryPhotoWrapper: FC<{ photoData: PhotoData }> = ({
 }) => {
   return (
     <Link to={`/photo/${photoData.id}`}>
-      <PexelsPhotoStyled imageData={photoData} />
+      <PexelsPhotoStyled imageData={photoData} targetSize="medium" />
     </Link>
   );
 };
