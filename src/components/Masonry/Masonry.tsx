@@ -4,7 +4,12 @@ import { ScrollState, useScrollListener } from "../../hooks/useScrollListener";
 import { MasonryItem, MasonryItemContainer } from "./types";
 import { MASONRY_BATCH_SIZE, MASONRY_OFFSET, MASONRY_STEP } from "./consts";
 
-import "./Masonry.css";
+import {
+  debugInfo as debugInfoClassName,
+  MasonryItemStyled,
+  MasonryStyled,
+  OffsetLine,
+} from "./Masonry.styles";
 
 type MasonryProps<ItemT extends MasonryItem> = {
   items: ItemT[];
@@ -93,7 +98,7 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
       firstRef,
       afterFirstRef,
       beforeLastRef,
-      lastRef,
+      lastRef
     );
 
     if (scrollDirection === "down") {
@@ -187,7 +192,7 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
   useEffect(() => {
     const childrenNumber = document.querySelectorAll("#grid > div")?.length;
-    const debugInfo = document.querySelector(".debug-info");
+    const debugInfo = document.querySelector(`.${debugInfoClassName}`);
 
     if (debugInfo && childrenNumber) {
       console.log({ debugInfo: debugInfo.innerHTML });
@@ -201,28 +206,26 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
   return (
     <>
-      <div ref={containerRef} id="grid" className="masonry">
+      <MasonryStyled ref={containerRef} id="grid">
         {items.map((itemContainer, i) => {
           if (i < first || i > last) return null;
 
           return (
-            <div
+            <MasonryItemStyled
               key={itemContainer.key}
               ref={getRefByIndex(i)}
-              style={{
-                gridArea: itemContainer.gridArea,
-              }}
+              gridArea={itemContainer.gridArea}
             >
               {renderItem(itemContainer.item)}
-            </div>
+            </MasonryItemStyled>
           );
         })}
-      </div>
+      </MasonryStyled>
 
-      <div className="line" style={{ top: `${offset}px` }}></div>
-      <div className="line" style={{ bottom: `${offset}px` }}></div>
+      <OffsetLine top={offset} />
+      <OffsetLine bottom={offset} />
 
-      <div className="debug-info"></div>
+      <div className={debugInfoClassName} />
     </>
   );
 };

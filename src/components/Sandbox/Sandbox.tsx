@@ -1,5 +1,3 @@
-import "./Sandbox.css";
-
 export const Sandbox = () => {
   return (
     <div className="masonry">
