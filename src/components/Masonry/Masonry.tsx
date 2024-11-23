@@ -35,8 +35,8 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
   const beforeLastRef = useRef<HTMLDivElement>(null);
   const lastRef = useRef<HTMLDivElement>(null);
-  const [beforeLast, setBeforeLast] = useState(batchSize);
-  const [last, setLast] = useState(batchSize);
+  const [beforeLast, setBeforeLast] = useState(batchSize - 1);
+  const [last, setLast] = useState(batchSize - 1);
 
   const items: MasonryItemContainer<ItemT>[] = useMemo(() => {
     if (!containerRef.current) return [];
@@ -97,32 +97,59 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
     console.log(
       "checkIntersections",
-      firstRef,
-      afterFirstRef,
-      beforeLastRef,
-      lastRef
+      "f1",
+      first,
+      "f2",
+      afterFirst,
+      "l2",
+      beforeLast,
+      "l1",
+      last,
+      "firstRef",
+      !!firstRef.current,
+      "afterFirstRef",
+      !!afterFirstRef.current
+      // beforeLastRef: beforeLastRef.current,
+      // lastRef: lastRef.current,
     );
 
-    if (scrollDirection === "down") {
-      if (!afterFirstRef.current) return;
+    let newFirst = first;
+    let newAfterFirst = afterFirst;
+    let newBeforeLast = beforeLast;
+    let newLast = last;
 
-      const afterFirstRect = afterFirstRef.current.getBoundingClientRect();
+    // scrolling down, lower bound
+    if (scrollDirection === "down" && lastRef.current) {
+      const rect2 = lastRef.current.getBoundingClientRect();
 
-      console.log({ afterFirstRect });
+      const isIntersecting = rect2.top <= window.innerHeight - offset;
 
-      const isIntersecting = afterFirstRect.bottom >= offset;
+      if (isIntersecting) {
+        const nextLast = Math.min(last + batchSize, items.length - 1);
 
-      console.log("down", { isIntersecting, bottom: afterFirstRect.bottom });
-
-      if (!isIntersecting) {
-        setFirst(afterFirst);
-        setAfterFirst(afterFirst + batchSize);
+        if (nextLast > last) {
+          newBeforeLast = last;
+          newLast = nextLast;
+        } else {
+          onLastReached();
+        }
       }
     }
 
-    if (scrollDirection === "up") {
-      if (!firstRef.current) return;
+    // scrolling down, upper bound
+    if (scrollDirection === "down" && afterFirstRef.current) {
+      const afterFirstRect = afterFirstRef.current.getBoundingClientRect();
 
+      const isIntersecting = afterFirstRect.bottom >= offset;
+
+      if (!isIntersecting) {
+        newFirst = afterFirst;
+        newAfterFirst = afterFirst + batchSize;
+      }
+    }
+
+    // scrolling up, upper bound
+    if (scrollDirection === "up" && firstRef.current) {
       const firstRect = firstRef.current.getBoundingClientRect();
       const isIntersecting = firstRect.bottom >= offset;
 
@@ -130,44 +157,43 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
         const nextFirst = Math.max(first - batchSize, 0);
 
         if (nextFirst < first) {
-          setAfterFirst(first);
-          setFirst(nextFirst);
+          newAfterFirst = first;
+          newFirst = nextFirst;
         }
       }
     }
 
-    /// ========================================================
-
-    if (scrollDirection === "down") {
-      if (!lastRef.current) return;
-
-      const rect2 = lastRef.current.getBoundingClientRect();
-
-      const isIntersecting = rect2.top <= window.innerHeight - offset;
-
-      if (isIntersecting) {
-        const nextLast = Math.min(last + batchSize, items.length);
-
-        if (nextLast > last) {
-          setBeforeLast(last);
-          setLast(nextLast);
-        } else {
-          onLastReached();
-        }
-      }
-    }
-
-    if (scrollDirection === "up") {
-      if (!beforeLastRef.current) return;
-
+    // scrolling up, lower bound
+    if (scrollDirection === "up" && beforeLastRef.current) {
       const rect1 = beforeLastRef.current.getBoundingClientRect();
       const isIntersecting = rect1.top <= window.innerHeight - offset;
 
       if (!isIntersecting) {
-        setLast(beforeLast);
-        setBeforeLast(beforeLast - batchSize);
+        newLast = beforeLast;
+        newBeforeLast = beforeLast - batchSize;
       }
     }
+
+    /**
+     * There are cases where the batch size is bigger than the amount
+     * of items visible on the screen. For such cases, the batchSize should be adjusted
+     * to avoid loading too many items. This issue is not addressed yet.
+     */
+
+    if (newAfterFirst >= newBeforeLast) {
+      const d = Math.floor((newAfterFirst - newBeforeLast) / 2);
+      newAfterFirst = newBeforeLast + d;
+      newBeforeLast = newAfterFirst + 1;
+    }
+
+    if (newBeforeLast >= newLast) {
+      newLast = newBeforeLast + 1;
+    }
+
+    if (newFirst !== first) setFirst(newFirst);
+    if (newAfterFirst !== afterFirst) setAfterFirst(newAfterFirst);
+    if (newBeforeLast !== beforeLast) setBeforeLast(newBeforeLast);
+    if (newLast !== last) setLast(newLast);
   };
 
   const scrollState = useScrollListener(checkIntersections);
@@ -188,8 +214,8 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
   const getRefByIndex = (index: number) => {
     if (index === afterFirst) return afterFirstRef;
     if (index === first) return firstRef;
-    if (index === last - 1) return lastRef;
-    if (index === beforeLast - 1) return beforeLastRef;
+    if (index === last) return lastRef;
+    if (index === beforeLast) return beforeLastRef;
   };
 
   useEffect(() => {
