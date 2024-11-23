@@ -75,13 +75,13 @@ export const PhotoDetails = () => {
   }, [photoId]);
 
   const navigateBack = () => {
-    navigate("/");
+    navigate(-1);
   };
 
   return (
     <PageContainer>
       <PhotoDetailsContainer>
-        <Button onClick={navigateBack}>go to gallery</Button>
+        <Button onClick={navigateBack}>go back</Button>
 
         {loading && <Text>Loading...</Text>}
         {error && <Text>{error}</Text>}
