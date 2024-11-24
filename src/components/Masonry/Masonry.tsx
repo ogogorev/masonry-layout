@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 
 import { ScrollState, useScrollListener } from "../../hooks/useScrollListener";
@@ -29,6 +29,28 @@ type MasonryProps<ItemT extends MasonryItem> = {
   minColumnWidth?: number;
 };
 
+const useResizeListener = () => {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    let timeoutId: number;
+    const handleResize = () => {
+      timeoutId = setTimeout(() => {
+        setWindowWidth(window.innerWidth);
+      }, 500);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timeoutId);
+    };
+  });
+
+  return windowWidth;
+};
+
 export const MasonryLayout = <ItemT extends MasonryItem>({
   items: itemsSrc,
   renderItem,
@@ -39,6 +61,10 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
   gap = MASONRY_GAP,
   minColumnWidth = MASONRY_MIN_COLUMN_WIDTH,
 }: MasonryProps<ItemT>) => {
+  const windowWidth = useResizeListener();
+
+  console.log("debug windowWidth", windowWidth);
+
   const { $first, $afterFirst, $beforeLast, $last } = getState(stateKey, {
     first: 0,
     afterFirst: 0,
@@ -64,11 +90,43 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
     const gridComputedStyle = window.getComputedStyle(containerRef.current);
 
+    /**
+     * The code below is really bad and has to be rewritten (or removed).
+     * It's needed to fix the grid after a resize event. Since the width of grid columns
+     * is dynamic, after a resize event the column widths might not be equal.
+     * The grid items that are still assigned to the columns with smaller width prevent the grid
+     * from normal resizing (where it would remove the not fitting columns).
+     * To fix that I need to compare all the widths, recalculate the new column width,
+     * and rearrange the grid. It becomes clear that grid is not the best solution
+     * for such a dynamic masonry layout, but if I still keep it, then I should at least consider
+     * fixing column width per breakpoint to avoid the math below.
+     * // TODO: Find a better solution.
+     */
     const columnStrings = gridComputedStyle
       .getPropertyValue("grid-template-columns")
       .split(" ");
-    const columnWidth = Number(columnStrings[0].slice(0, -2));
-    const columnCount = columnStrings.length;
+
+    const DELTA = 2;
+    const columnWidths = columnStrings.map((s) => Number(s.slice(0, -2)));
+    const columnCount = columnWidths.filter(
+      (cW) => Math.abs(cW - columnWidths[0]) < DELTA
+    ).length;
+
+    let columnWidth = columnWidths[0];
+
+    if (columnCount < columnWidths.length) {
+      const sumOfCurrentColumns = columnWidths.reduce((a, c) => a + c, 0);
+      columnWidth =
+        (sumOfCurrentColumns + gap * (columnWidths.length - columnCount)) /
+        columnCount;
+    }
+
+    console.log(
+      "debug windowWidth, columnWidth",
+      columnStrings,
+      columnWidths,
+      columnCount
+    );
 
     const columns = Array(columnCount).fill(1);
 
@@ -108,7 +166,7 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
     });
 
     return newItems;
-  }, [containerRef.current, itemsSrc]);
+  }, [containerRef.current, itemsSrc, windowWidth]);
 
   const checkIntersections = ({ direction: scrollDirection }: ScrollState) => {
     // return;
