@@ -76,10 +76,10 @@ export const PhotoDetails = () => {
 
         {photoData && (
           <>
+            <PhotoInfo photoData={photoData} />
             <PhotoWrapper>
               <PexelsImage imageData={photoData} />
             </PhotoWrapper>
-            <PhotoInfo photoData={photoData} />
           </>
         )}
       </PhotoDetailsContainer>
