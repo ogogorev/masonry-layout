@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 
 import { ScrollState, useScrollListener } from "../../hooks/useScrollListener";
@@ -13,14 +13,14 @@ import {
 import { getState } from "./store";
 import {
   debugInfo as debugInfoClassName,
-  MasonryItemStyled,
   MasonryStyled,
   OffsetLine,
 } from "./Masonry.styles";
+import { MasonryItem as MasonryItemComponent } from "./MasonryItem";
 
 type MasonryProps<ItemT extends MasonryItem> = {
   items: ItemT[];
-  renderItem: (item: ItemT) => JSX.Element;
+  ItemContentComponent: FC<{ item: ItemT }>;
   batchSize?: number;
   onLastReached: () => void;
   stateKey: string;
@@ -53,7 +53,7 @@ const useResizeListener = () => {
 
 export const MasonryLayout = <ItemT extends MasonryItem>({
   items: itemsSrc,
-  renderItem,
+  ItemContentComponent,
   onLastReached,
   batchSize = MASONRY_BATCH_SIZE,
   offset = MASONRY_OFFSET,
@@ -309,12 +309,11 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
     const debugInfo = document.querySelector(`.${debugInfoClassName}`);
 
     if (debugInfo && childrenNumber) {
-      console.log({ debugInfo: debugInfo.innerHTML });
       debugInfo.innerHTML = `
         Rendered items from ${first} to ${last}
         <br />
         DOM: ${childrenNumber}
-        `;
+      `;
     }
   });
 
@@ -329,15 +328,16 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
       >
         {items.map((itemContainer, i) => {
           if (i < first || i > last) return null;
-
+          const ref = getRefByIndex(i);
           return (
-            <MasonryItemStyled
+            <MasonryItemComponent
               key={itemContainer.key}
-              ref={getRefByIndex(i)}
+              ref={ref}
+              refValue={ref}
               gridArea={itemContainer.gridArea}
             >
-              {renderItem(itemContainer.item)}
-            </MasonryItemStyled>
+              <ItemContentComponent item={itemContainer.item} />
+            </MasonryItemComponent>
           );
         })}
       </MasonryStyled>

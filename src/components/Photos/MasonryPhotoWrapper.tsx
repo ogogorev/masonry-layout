@@ -1,5 +1,5 @@
-import { FC } from "react";
-import { Link } from "react-router-dom";
+import { FC, memo } from "react";
+import { NavigateFunction } from "react-router-dom";
 import { styled } from "@linaria/react";
 
 import { PhotoData } from "../../api/pexels/types";
@@ -10,12 +10,24 @@ const PexelsPhotoStyled = styled(PexelsImage)`
   border-radius: 8px;
 `;
 
-export const MasonryPhotoWrapper: FC<{ photoData: PhotoData }> = ({
-  photoData,
+type MasonryPhotoItemProps = {
+  item: PhotoData;
+  navigate: NavigateFunction;
+};
+
+const MasonryPhotoItemC: FC<MasonryPhotoItemProps> = ({
+  item: photoData,
+  navigate,
 }) => {
   return (
-    <Link to={`/photo/${photoData.id}`}>
+    <div onClick={() => navigate(`/photo/${photoData.id}`)}>
       <PexelsPhotoStyled imageData={photoData} targetSize="medium" />
-    </Link>
+    </div>
   );
 };
+
+export const MasonryPhotoItem = memo(
+  MasonryPhotoItemC,
+  (prev: MasonryPhotoItemProps, next: MasonryPhotoItemProps) =>
+    prev.item.id === next.item.id
+);
