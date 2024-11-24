@@ -1,4 +1,5 @@
 import { ScrollState } from "../../hooks/useScrollListener";
+import { MasonryItem, MasonryItemContainer } from "./types";
 
 export const checkIntersections = (
   indexes: {
@@ -134,4 +135,93 @@ export const checkIntersections = (
     newBeforeLast,
     newLast,
   };
+};
+
+export const calculateColumns = (gridNode: HTMLElement, gap: number) => {
+  const gridComputedStyle = window.getComputedStyle(gridNode);
+
+  /**
+   * The code below is really bad and has to be rewritten (or removed).
+   * It's needed to fix the grid after a resize event. Since the width of grid columns
+   * is dynamic, after a resize event the column widths might not be equal.
+   * The grid items that are still assigned to the columns with smaller width prevent the grid
+   * from normal resizing (where it would remove the not fitting columns).
+   * To fix that I need to compare all the widths, recalculate the new column width,
+   * and rearrange the grid. It becomes clear that grid is not the best solution
+   * for such a dynamic masonry layout, but if I still keep it, then I should at least consider
+   * fixing column width per breakpoint to avoid the math below.
+   * // TODO: Find a better solution.
+   */
+  const columnStrings = gridComputedStyle
+    .getPropertyValue("grid-template-columns")
+    .split(" ");
+
+  const DELTA = 2;
+  const columnWidths = columnStrings.map((s) => Number(s.slice(0, -2)));
+  const columnCount = columnWidths.filter(
+    (cW) => Math.abs(cW - columnWidths[0]) < DELTA
+  ).length;
+
+  let columnWidth = columnWidths[0];
+
+  if (columnCount < columnWidths.length) {
+    const sumOfCurrentColumns = columnWidths.reduce((a, c) => a + c, 0);
+    columnWidth =
+      (sumOfCurrentColumns + gap * (columnWidths.length - columnCount)) /
+      columnCount;
+  }
+
+  // console.log(
+  //   "debug windowWidth, columnWidth",
+  //   columnStrings,
+  //   columnWidths,
+  //   columnCount
+  // );
+
+  return { columnWidth, columnCount };
+};
+
+export const processItems = <ItemT extends MasonryItem>(
+  sourceItems: ItemT[],
+  columnCount: number,
+  columnWidth: number,
+  rowHeight: number,
+  gap: number
+) => {
+  const columns = Array(columnCount).fill(1);
+
+  const getMinColI = () => {
+    return columns.indexOf(Math.min(...columns));
+  };
+
+  const newItems: MasonryItemContainer<ItemT>[] = [];
+
+  sourceItems.forEach((item, i) => {
+    const minI = getMinColI();
+    const gridCol = minI + 1;
+    const gridRowStart = columns[minI];
+
+    const ratio = item.width / item.height;
+    const height = columnWidth / ratio;
+
+    const gridRowSpan = Math.ceil(height / rowHeight) + gap / rowHeight;
+
+    columns[minI] += gridRowSpan;
+
+    const gridRowEnd = gridRowStart + gridRowSpan;
+
+    const gridArea = `${gridRowStart} / ${gridCol} / ${gridRowEnd} / ${
+      gridCol + 1
+    }`;
+
+    newItems.push({
+      gridArea,
+      key: `${item.id}-${item.timestamp}-${i}`, // TODO: Fix how ids are generated
+      item: {
+        ...item,
+      },
+    });
+  });
+
+  return newItems;
 };

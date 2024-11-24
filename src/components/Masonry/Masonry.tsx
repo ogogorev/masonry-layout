@@ -5,6 +5,7 @@ import { ScrollState, useScrollListener } from "../../hooks/useScrollListener";
 import { useResizeListener } from "../../hooks/useResizeListener";
 import { MasonryItem as MasonryItemComponent } from "./MasonryItem";
 import { MasonryItem, MasonryItemContainer } from "./types";
+import { calculateColumns, checkIntersections, processItems } from "./math";
 import {
   MASONRY_BATCH_SIZE,
   MASONRY_MIN_COLUMN_WIDTH,
@@ -18,7 +19,6 @@ import {
   MasonryStyled,
   OffsetLine,
 } from "./Masonry.styles";
-import { checkIntersections } from "./utils";
 
 type MasonryProps<ItemT extends MasonryItem> = {
   items: ItemT[];
@@ -41,8 +41,6 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
   gap = MASONRY_GAP,
   minColumnWidth = MASONRY_MIN_COLUMN_WIDTH,
 }: MasonryProps<ItemT>) => {
-  const windowWidth = useResizeListener();
-
   const itemsCount = itemsSrc.length;
 
   const { $first, $afterFirst, $beforeLast, $last } = getState(stateKey, {
@@ -59,94 +57,28 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
   const firstRef = useRef<HTMLDivElement>(null);
   const afterFirstRef = useRef<HTMLDivElement>(null);
-
   const beforeLastRef = useRef<HTMLDivElement>(null);
   const lastRef = useRef<HTMLDivElement>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const windowWidth = useResizeListener();
+
+  const { columnCount, columnWidth } = useMemo(() => {
+    if (!containerRef.current) return { columnWidth: 0, columnCount: 0 };
+    return calculateColumns(containerRef.current, gap);
+  }, [containerRef.current, windowWidth]);
+
   const items: MasonryItemContainer<ItemT>[] = useMemo(() => {
-    if (!containerRef.current) return [];
-
-    const gridComputedStyle = window.getComputedStyle(containerRef.current);
-
-    /**
-     * The code below is really bad and has to be rewritten (or removed).
-     * It's needed to fix the grid after a resize event. Since the width of grid columns
-     * is dynamic, after a resize event the column widths might not be equal.
-     * The grid items that are still assigned to the columns with smaller width prevent the grid
-     * from normal resizing (where it would remove the not fitting columns).
-     * To fix that I need to compare all the widths, recalculate the new column width,
-     * and rearrange the grid. It becomes clear that grid is not the best solution
-     * for such a dynamic masonry layout, but if I still keep it, then I should at least consider
-     * fixing column width per breakpoint to avoid the math below.
-     * // TODO: Find a better solution.
-     */
-    const columnStrings = gridComputedStyle
-      .getPropertyValue("grid-template-columns")
-      .split(" ");
-
-    const DELTA = 2;
-    const columnWidths = columnStrings.map((s) => Number(s.slice(0, -2)));
-    const columnCount = columnWidths.filter(
-      (cW) => Math.abs(cW - columnWidths[0]) < DELTA
-    ).length;
-
-    let columnWidth = columnWidths[0];
-
-    if (columnCount < columnWidths.length) {
-      const sumOfCurrentColumns = columnWidths.reduce((a, c) => a + c, 0);
-      columnWidth =
-        (sumOfCurrentColumns + gap * (columnWidths.length - columnCount)) /
-        columnCount;
-    }
-
-    console.log(
-      "debug windowWidth, columnWidth",
-      columnStrings,
-      columnWidths,
-      columnCount
+    if (!columnCount || !columnWidth) return [];
+    return processItems(
+      itemsSrc,
+      columnCount,
+      columnWidth,
+      MASONRY_ROW_HEIGHT,
+      gap
     );
-
-    const columns = Array(columnCount).fill(1);
-
-    const getMinColI = () => {
-      // TODO: Can be faster
-      return columns.indexOf(Math.min(...columns));
-    };
-
-    const newItems: MasonryItemContainer<ItemT>[] = [];
-
-    itemsSrc.forEach((item, i) => {
-      const minI = getMinColI();
-      const gridCol = minI + 1;
-      const gridRowStart = columns[minI];
-
-      const ratio = item.width / item.height;
-      const height = columnWidth / ratio;
-
-      const gridRowSpan =
-        Math.ceil(height / MASONRY_ROW_HEIGHT) + gap / MASONRY_ROW_HEIGHT;
-
-      columns[minI] += gridRowSpan;
-
-      const gridRowEnd = gridRowStart + gridRowSpan;
-
-      const gridArea = `${gridRowStart} / ${gridCol} / ${gridRowEnd} / ${
-        gridCol + 1
-      }`;
-
-      newItems.push({
-        gridArea,
-        key: `${item.id}-${item.timestamp}-${i}`, // TODO: Fix how ids are generated
-        item: {
-          ...item,
-        },
-      });
-    });
-
-    return newItems;
-  }, [containerRef.current, itemsSrc, windowWidth]);
+  }, [itemsSrc, columnCount, columnWidth]);
 
   const handleScroll = ({ direction: scrollDirection }: ScrollState) => {
     const { newFirst, newAfterFirst, newBeforeLast, newLast } =
