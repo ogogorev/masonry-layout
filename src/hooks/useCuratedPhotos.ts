@@ -42,11 +42,15 @@ export const useCuratedPhotos = (pageSize: number) => {
   const fetchNextPage = () => {
     if (nextPage) {
       fetch(() => fetchUrl(nextPage));
+    } else {
+      fetch(() => fetchCuratedPhotos({ perPage: pageSize }));
     }
   };
 
   useEffect(() => {
-    fetch(() => fetchCuratedPhotos({ perPage: pageSize }));
+    if (photos.length < 1) {
+      fetchNextPage();
+    }
   }, []);
 
   return {

@@ -1,4 +1,11 @@
-import { FC, useEffect, useMemo, useRef } from "react";
+import {
+  FC,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useStore } from "@nanostores/react";
 
 import { ScrollState, useScrollListener } from "../../hooks/useScrollListener";
@@ -64,9 +71,16 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
   const windowWidth = useResizeListener();
 
-  const { columnCount, columnWidth } = useMemo(() => {
-    if (!containerRef.current) return { columnWidth: 0, columnCount: 0 };
-    return calculateColumns(containerRef.current, gap);
+  const [columnState, setColumnState] = useState({
+    columnCount: 0,
+    columnWidth: 0,
+  });
+  const { columnCount, columnWidth } = columnState;
+
+  useLayoutEffect(() => {
+    if (containerRef.current) {
+      setColumnState(calculateColumns(containerRef.current, gap));
+    }
   }, [containerRef.current, windowWidth]);
 
   const items: MasonryItemContainer<ItemT>[] = useMemo(() => {
@@ -119,10 +133,13 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
   console.log("Masonry rendered", {
     itemsSrc,
     items,
+    columnWidth,
+    columnCount,
     first,
     afterFirst,
     beforeLast,
     last,
+    containerRef,
   });
 
   const getRefByIndex = (index: number) => {
