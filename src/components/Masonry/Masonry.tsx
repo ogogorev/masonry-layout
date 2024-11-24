@@ -1,7 +1,9 @@
-import { FC, useEffect, useMemo, useRef, useState } from "react";
+import { FC, useEffect, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 
 import { ScrollState, useScrollListener } from "../../hooks/useScrollListener";
+import { useResizeListener } from "../../hooks/useResizeListener";
+import { MasonryItem as MasonryItemComponent } from "./MasonryItem";
 import { MasonryItem, MasonryItemContainer } from "./types";
 import {
   MASONRY_BATCH_SIZE,
@@ -16,7 +18,7 @@ import {
   MasonryStyled,
   OffsetLine,
 } from "./Masonry.styles";
-import { MasonryItem as MasonryItemComponent } from "./MasonryItem";
+import { checkIntersections } from "./utils";
 
 type MasonryProps<ItemT extends MasonryItem> = {
   items: ItemT[];
@@ -27,28 +29,6 @@ type MasonryProps<ItemT extends MasonryItem> = {
   offset?: number;
   gap?: number;
   minColumnWidth?: number;
-};
-
-const useResizeListener = () => {
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-  useEffect(() => {
-    let timeoutId: number;
-    const handleResize = () => {
-      timeoutId = setTimeout(() => {
-        setWindowWidth(window.innerWidth);
-      }, 500);
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      clearTimeout(timeoutId);
-    };
-  });
-
-  return windowWidth;
 };
 
 export const MasonryLayout = <ItemT extends MasonryItem>({
@@ -168,108 +148,21 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
     return newItems;
   }, [containerRef.current, itemsSrc, windowWidth]);
 
-  const checkIntersections = ({ direction: scrollDirection }: ScrollState) => {
-    // return;
-
-    console.log(
-      "checkIntersections",
-      "f1",
-      first,
-      "f2",
-      afterFirst,
-      "l2",
-      beforeLast,
-      "l1",
-      last,
-      "batchSize",
-      batchSize
-      // "itemsCount",
-      // itemsCount
-      // "firstRef",
-      // !!firstRef.current,
-      // "afterFirstRef",
-      // !!afterFirstRef.current
-      // beforeLastRef: beforeLastRef.current,
-      // lastRef: lastRef.current,
-    );
-
-    let newFirst = first;
-    let newAfterFirst = afterFirst;
-    let newBeforeLast = beforeLast;
-    let newLast = last;
-
-    // scrolling down
-    if (scrollDirection === "down" && lastRef.current) {
-      // lower bound
-      const rect2 = lastRef.current.getBoundingClientRect();
-
-      const isIntersecting = rect2.top <= window.innerHeight - offset;
-
-      if (isIntersecting) {
-        const nextLast = Math.min(last + batchSize, itemsCount - 1);
-
-        if (nextLast > last) {
-          newBeforeLast = last;
-          newLast = nextLast;
-
-          // Check upper bound only if there will be an update in lower bound
-          if (afterFirstRef.current) {
-            const afterFirstRect =
-              afterFirstRef.current.getBoundingClientRect();
-
-            const isIntersecting = afterFirstRect.bottom >= offset;
-
-            if (!isIntersecting) {
-              newFirst = afterFirst;
-              newAfterFirst = afterFirst + batchSize;
-            }
-          }
-        }
-      }
-    }
-
-    // scrolling up
-    if (scrollDirection === "up" && firstRef.current) {
-      // upper bound
-      const firstRect = firstRef.current.getBoundingClientRect();
-      const isIntersecting = firstRect.bottom >= offset;
-
-      if (isIntersecting) {
-        const nextFirst = Math.max(first - batchSize, 0);
-
-        if (nextFirst < first) {
-          newAfterFirst = first;
-          newFirst = nextFirst;
-
-          // Check lower bound only if there will be an update in upper bound
-          if (beforeLastRef.current) {
-            const rect = beforeLastRef.current.getBoundingClientRect();
-            const isIntersecting = rect.top <= window.innerHeight - offset;
-
-            if (!isIntersecting) {
-              newLast = beforeLast;
-              newBeforeLast = beforeLast - batchSize;
-            }
-          }
-        }
-      }
-    }
-
-    /**
-     * There are cases where the batch size is bigger than the amount
-     * of items visible on the screen. For such cases, the batchSize should be adjusted
-     * to avoid loading too many items. This issue is not addressed yet.
-     */
-
-    if (newAfterFirst >= newBeforeLast) {
-      const d = Math.floor((newAfterFirst - newBeforeLast) / 2);
-      newAfterFirst = newBeforeLast + d;
-      newBeforeLast = newAfterFirst + 1;
-    }
-
-    if (newBeforeLast >= newLast) {
-      newLast = newBeforeLast + 1;
-    }
+  const handleScroll = ({ direction: scrollDirection }: ScrollState) => {
+    const { newFirst, newAfterFirst, newBeforeLast, newLast } =
+      checkIntersections(
+        { first, afterFirst, beforeLast, last },
+        {
+          first: firstRef.current,
+          afterFirst: afterFirstRef.current,
+          beforeLast: beforeLastRef.current,
+          last: lastRef.current,
+        },
+        batchSize,
+        offset,
+        itemsCount,
+        scrollDirection
+      );
 
     if (newFirst !== first) $first.set(newFirst);
     if (newAfterFirst !== afterFirst) $afterFirst.set(newAfterFirst);
@@ -277,19 +170,19 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
     if (newLast !== last) $last.set(newLast);
   };
 
+  useScrollListener(handleScroll, 30);
+
+  useEffect(() => {
+    if (lastRef.current) {
+      handleScroll({ direction: "down", position: 0 });
+    }
+  }, [beforeLastRef.current, lastRef.current, handleScroll]);
+
   useEffect(() => {
     if (last >= itemsCount - 1) {
       onLastReached();
     }
   }, [last, itemsCount, onLastReached]);
-
-  const scrollState = useScrollListener(checkIntersections);
-
-  useEffect(() => {
-    if (lastRef.current) {
-      checkIntersections(scrollState);
-    }
-  }, [beforeLastRef.current, lastRef.current, checkIntersections]);
 
   console.log("Masonry rendered", {
     itemsSrc,

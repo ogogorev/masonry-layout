@@ -23,7 +23,7 @@ export const Photos = () => {
     <PageContainer>
       <MasonryLayout
         items={photos}
-        batchSize={20}
+        batchSize={10}
         onLastReached={fetchNextPage}
         ItemContentComponent={ItemContentComponent}
         stateKey="curatedPhotos"

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export type ScrollState = {
   direction: "down" | "up";
@@ -6,28 +6,33 @@ export type ScrollState = {
 };
 
 export const useScrollListener = (
-  callback: (scrollState: ScrollState) => void
+  callback: (scrollState: ScrollState) => void,
+  throttleMs: number
 ) => {
-  // TODO: Add a comment explaining how I use useState here
-  const [scrollState] = useState<ScrollState>({
-    direction: "down",
-    position: 0,
-  });
-
-  const handleScroll = () => {
-    scrollState.direction =
-      window.scrollY < scrollState.position ? "up" : "down";
-    scrollState.position = window.scrollY;
-    callback(scrollState);
-  };
+  const scrollState = useRef<ScrollState>({ direction: "down", position: 0 });
+  const timeoutId = useRef<number>();
 
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
+    const handleScroll = () => {
+      scrollState.current.direction =
+        window.scrollY < scrollState.current.position ? "up" : "down";
+      scrollState.current.position = window.scrollY;
+      callback(scrollState.current);
+    };
+
+    const listener = () => {
+      if (!timeoutId.current) {
+        handleScroll();
+        timeoutId.current = setTimeout(() => {
+          timeoutId.current = undefined;
+        }, throttleMs);
+      }
+    };
+
+    window.addEventListener("scroll", listener, { passive: true });
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", listener);
     };
-  }, [callback]);
-
-  return scrollState;
+  });
 };
