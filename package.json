@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "demo": "pnpm install && pnpm run build && pnpm run preview"
   },
   "dependencies": {
     "@nanostores/react": "^0.8.0",
