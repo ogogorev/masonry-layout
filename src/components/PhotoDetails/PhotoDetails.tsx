@@ -2,25 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { styled } from "@linaria/react";
 
-import { breakpoints } from "../../styles/breakpoints";
 import { PexelsImage } from "../Image/PexelsImage";
 import { PhotoData } from "../../api/pexels/types";
 import { fetchPhoto } from "../../api/pexels/photos";
 import { PhotoInfo } from "./PhotoInfo";
 import { Button } from "../ui/Button";
 import { Text } from "../ui/Text";
-
-const PageContainer = styled.div`
-  max-width: 1200px;
-  padding: 1.5rem 1rem;
-  margin: 0 auto;
-  height: 80vh;
-
-  @media (min-width: ${breakpoints.lg}px) {
-    padding: 1.5rem 2rem;
-    height: 100vh;
-  }
-`;
+import { PageContainer } from "../styled/PageContainer";
 
 const PhotoDetailsContainer = styled.div`
   height: 100%;
