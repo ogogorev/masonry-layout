@@ -63,7 +63,7 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 }: MasonryProps<ItemT>) => {
   const windowWidth = useResizeListener();
 
-  console.log("debug windowWidth", windowWidth);
+  const itemsCount = itemsSrc.length;
 
   const { $first, $afterFirst, $beforeLast, $last } = getState(stateKey, {
     first: 0,
@@ -181,10 +181,14 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
       beforeLast,
       "l1",
       last,
-      "firstRef",
-      !!firstRef.current,
-      "afterFirstRef",
-      !!afterFirstRef.current
+      "batchSize",
+      batchSize
+      // "itemsCount",
+      // itemsCount
+      // "firstRef",
+      // !!firstRef.current,
+      // "afterFirstRef",
+      // !!afterFirstRef.current
       // beforeLastRef: beforeLastRef.current,
       // lastRef: lastRef.current,
     );
@@ -201,13 +205,11 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
       const isIntersecting = rect2.top <= window.innerHeight - offset;
 
       if (isIntersecting) {
-        const nextLast = Math.min(last + batchSize, items.length - 1);
+        const nextLast = Math.min(last + batchSize, itemsCount - 1);
 
         if (nextLast > last) {
           newBeforeLast = last;
           newLast = nextLast;
-        } else {
-          onLastReached();
         }
       }
     }
@@ -272,6 +274,12 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
     if (newLast !== last) $last.set(newLast);
   };
 
+  useEffect(() => {
+    if (last >= itemsCount - 1) {
+      onLastReached();
+    }
+  }, [last, itemsCount, onLastReached]);
+
   const scrollState = useScrollListener(checkIntersections);
 
   useEffect(() => {
@@ -285,6 +293,8 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
     items,
     first,
     afterFirst,
+    beforeLast,
+    last,
   });
 
   const getRefByIndex = (index: number) => {
