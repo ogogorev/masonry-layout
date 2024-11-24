@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { ComponentProps, useMemo } from "react";
 
 export const Photos = () => {
-  const { photos, fetchNextPage, loading } = useCuratedPhotos(80);
+  const { photos, fetchNextPage, loading } = useCuratedPhotos(50);
 
   const navigate = useNavigate();
 
@@ -23,6 +23,7 @@ export const Photos = () => {
     <PageContainer>
       <MasonryLayout
         items={photos}
+        batchSize={20}
         onLastReached={fetchNextPage}
         ItemContentComponent={ItemContentComponent}
         stateKey="curatedPhotos"

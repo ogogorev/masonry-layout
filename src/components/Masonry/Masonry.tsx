@@ -198,8 +198,9 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
     let newBeforeLast = beforeLast;
     let newLast = last;
 
-    // scrolling down, lower bound
+    // scrolling down
     if (scrollDirection === "down" && lastRef.current) {
+      // lower bound
       const rect2 = lastRef.current.getBoundingClientRect();
 
       const isIntersecting = rect2.top <= window.innerHeight - offset;
@@ -210,24 +211,26 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
         if (nextLast > last) {
           newBeforeLast = last;
           newLast = nextLast;
+
+          // Check upper bound only if there will be an update in lower bound
+          if (afterFirstRef.current) {
+            const afterFirstRect =
+              afterFirstRef.current.getBoundingClientRect();
+
+            const isIntersecting = afterFirstRect.bottom >= offset;
+
+            if (!isIntersecting) {
+              newFirst = afterFirst;
+              newAfterFirst = afterFirst + batchSize;
+            }
+          }
         }
       }
     }
 
-    // scrolling down, upper bound
-    if (scrollDirection === "down" && afterFirstRef.current) {
-      const afterFirstRect = afterFirstRef.current.getBoundingClientRect();
-
-      const isIntersecting = afterFirstRect.bottom >= offset;
-
-      if (!isIntersecting) {
-        newFirst = afterFirst;
-        newAfterFirst = afterFirst + batchSize;
-      }
-    }
-
-    // scrolling up, upper bound
+    // scrolling up
     if (scrollDirection === "up" && firstRef.current) {
+      // upper bound
       const firstRect = firstRef.current.getBoundingClientRect();
       const isIntersecting = firstRect.bottom >= offset;
 
@@ -237,18 +240,18 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
         if (nextFirst < first) {
           newAfterFirst = first;
           newFirst = nextFirst;
+
+          // Check lower bound only if there will be an update in upper bound
+          if (beforeLastRef.current) {
+            const rect = beforeLastRef.current.getBoundingClientRect();
+            const isIntersecting = rect.top <= window.innerHeight - offset;
+
+            if (!isIntersecting) {
+              newLast = beforeLast;
+              newBeforeLast = beforeLast - batchSize;
+            }
+          }
         }
-      }
-    }
-
-    // scrolling up, lower bound
-    if (scrollDirection === "up" && beforeLastRef.current) {
-      const rect1 = beforeLastRef.current.getBoundingClientRect();
-      const isIntersecting = rect1.top <= window.innerHeight - offset;
-
-      if (!isIntersecting) {
-        newLast = beforeLast;
-        newBeforeLast = beforeLast - batchSize;
       }
     }
 
