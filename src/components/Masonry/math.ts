@@ -17,7 +17,7 @@ export const checkIntersections = (
   batchSize: number,
   offset: number,
   itemsCount: number,
-  scrollDirection: ScrollState["direction"]
+  { direction: scrollDirection, position: scrollPosition }: ScrollState
 ) => {
   // return;
 
@@ -57,8 +57,18 @@ export const checkIntersections = (
   let newBeforeLast = beforeLast;
   let newLast = last;
 
-  // scrolling down
-  if (scrollDirection === "down" && lastNode) {
+  // If in the highest position, just show the first batch
+  if (scrollDirection === "up" && scrollPosition === 0 && newFirst !== 0) {
+    return {
+      newFirst: 0,
+      newAfterFirst: 0,
+      newBeforeLast: batchSize - 1,
+      newLast: batchSize - 1,
+    };
+  }
+
+  // scrolling down or in the top position
+  if ((scrollPosition === 0 || scrollDirection === "down") && lastNode) {
     // lower bound
     const rect2 = lastNode.getBoundingClientRect();
 
@@ -90,7 +100,22 @@ export const checkIntersections = (
   if (scrollDirection === "up" && firstNode) {
     // upper bound
     const firstRect = firstNode.getBoundingClientRect();
-    const isIntersecting = firstRect.bottom >= offset;
+
+    const dist = firstRect.bottom - offset;
+
+    // Hack needed to skip updates in case the scroll is far above the current element.
+    // It implies the user scrolled all the way back. There will be a better fix later.
+    if (dist > 20000) {
+      console.log("debug upup", dist);
+      return {
+        newFirst,
+        newAfterFirst,
+        newBeforeLast,
+        newLast,
+      };
+    }
+
+    const isIntersecting = dist >= 0;
 
     if (isIntersecting) {
       const nextFirst = Math.max(first - batchSize, 0);

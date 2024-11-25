@@ -123,7 +123,7 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
 
   const items = processedItems.current; // Renaming here just to avoid renaming "items" everywhere else
 
-  const handleScroll = ({ direction: scrollDirection }: ScrollState) => {
+  const handleScroll = (scrollState: ScrollState) => {
     const { newFirst, newAfterFirst, newBeforeLast, newLast } =
       checkIntersections(
         { first, afterFirst, beforeLast, last },
@@ -136,7 +136,7 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
         batchSize,
         offset,
         itemsCount,
-        scrollDirection
+        scrollState
       );
 
     if (newFirst !== first) $first.set(newFirst);

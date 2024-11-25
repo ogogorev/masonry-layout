@@ -22,8 +22,8 @@ export const useScrollListener = (
 
     const listener = () => {
       if (!timeoutId.current) {
-        handleScroll();
         timeoutId.current = setTimeout(() => {
+          handleScroll();
           timeoutId.current = undefined;
         }, throttleMs);
       }
