@@ -24,6 +24,7 @@ export const Photos = () => {
       <MasonryLayout
         items={photos}
         batchSize={10}
+        offset={-300}
         onLastReached={fetchNextPage}
         ItemContentComponent={ItemContentComponent}
         stateKey="curatedPhotos"
