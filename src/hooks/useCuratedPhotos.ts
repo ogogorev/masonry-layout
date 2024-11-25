@@ -22,7 +22,7 @@ export const useCuratedPhotos = (pageSize: number) => {
 
       const response = await fetchFn();
 
-      console.log({ response });
+      //   console.log({ response });
 
       const fetchTimestamp = Date.now();
 

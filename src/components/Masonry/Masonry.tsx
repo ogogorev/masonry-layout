@@ -21,11 +21,7 @@ import {
   MASONRY_ROW_HEIGHT,
 } from "./consts";
 import { getState } from "./store";
-import {
-  debugInfo as debugInfoClassName,
-  MasonryStyled,
-  OffsetLine,
-} from "./Masonry.styles";
+import { MasonryStyled } from "./Masonry.styles";
 
 type MasonryProps<ItemT extends MasonryItem> = {
   items: ItemT[];
@@ -164,17 +160,17 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
     }
   }, [last, itemsCount, onLastReached]);
 
-  console.log("Masonry rendered", {
-    itemsSrc,
-    items,
-    // columnWidth,
-    // columnCount,
-    first,
-    afterFirst,
-    beforeLast,
-    last,
-    containerRef,
-  });
+  // console.log("Masonry rendered", {
+  //   itemsSrc,
+  //   items,
+  //   // columnWidth,
+  //   // columnCount,
+  //   first,
+  //   afterFirst,
+  //   beforeLast,
+  //   last,
+  //   containerRef,
+  // });
 
   const getRefByIndex = (index: number) => {
     if (index === afterFirst) return afterFirstRef;
@@ -183,18 +179,19 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
     if (index === beforeLast) return beforeLastRef;
   };
 
-  useEffect(() => {
-    const childrenNumber = document.querySelectorAll("#grid > div")?.length;
-    const debugInfo = document.querySelector(`.${debugInfoClassName}`);
+  // Needed for debugging
+  // useEffect(() => {
+  //   const childrenNumber = document.querySelectorAll("#grid > div")?.length;
+  //   const debugInfo = document.querySelector(`.${debugInfoClassName}`);
 
-    if (debugInfo && childrenNumber) {
-      debugInfo.innerHTML = `
-        Rendered items from ${first} to ${last}
-        <br />
-        DOM: ${childrenNumber}
-      `;
-    }
-  });
+  //   if (debugInfo && childrenNumber) {
+  //     debugInfo.innerHTML = `
+  //       Rendered items from ${first} to ${last}
+  //       <br />
+  //       DOM: ${childrenNumber}
+  //     `;
+  //   }
+  // });
 
   return (
     <>
@@ -221,10 +218,11 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
         })}
       </MasonryStyled>
 
-      <OffsetLine top={offset} />
+      {/* Needed for debugging */}
+      {/* <OffsetLine top={offset} />
       <OffsetLine bottom={offset} />
 
-      <div className={debugInfoClassName} />
+      <div className={debugInfoClassName} /> */}
     </>
   );
 };

@@ -17,7 +17,7 @@ export const Photos = () => {
     ) => <MasonryPhotoItem {...props} navigate={navigate} />;
   }, [navigate]);
 
-  console.log("Photos rendered", { photos });
+  //   console.log("Photos rendered", { photos });
 
   return (
     <PageContainer>

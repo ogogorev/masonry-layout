@@ -30,27 +30,27 @@ export const checkIntersections = (
     last: lastNode,
   } = nodes;
 
-  console.log(
-    "checkIntersections",
-    "f1",
-    first,
-    "f2",
-    afterFirst,
-    "l2",
-    beforeLast,
-    "l1",
-    last,
-    "batchSize",
-    batchSize
-    // "itemsCount",
-    // itemsCount
-    // "firstRef",
-    // !!firstNode,
-    // "afterFirstRef",
-    // !!afterFirstNode
-    // beforeLastRef: beforeLastNode,
-    // lastRef: lastRef.current,
-  );
+  // console.log(
+  //   "checkIntersections",
+  //   "f1",
+  //   first,
+  //   "f2",
+  //   afterFirst,
+  //   "l2",
+  //   beforeLast,
+  //   "l1",
+  //   last,
+  //   "batchSize",
+  //   batchSize
+  //   // "itemsCount",
+  //   // itemsCount
+  //   // "firstRef",
+  //   // !!firstNode,
+  //   // "afterFirstRef",
+  //   // !!afterFirstNode
+  //   // beforeLastRef: beforeLastNode,
+  //   // lastRef: lastRef.current,
+  // );
 
   let newFirst = first;
   let newAfterFirst = afterFirst;
@@ -106,7 +106,6 @@ export const checkIntersections = (
     // Hack needed to skip updates in case the scroll is far above the current element.
     // It implies the user scrolled all the way back. There will be a better fix later.
     if (dist > 20000) {
-      console.log("debug upup", dist);
       return {
         newFirst,
         newAfterFirst,
