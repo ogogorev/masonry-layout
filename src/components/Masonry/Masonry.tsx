@@ -77,22 +77,51 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
   });
   const { columnCount, columnWidth } = columnState;
 
-  useLayoutEffect(() => {
-    if (containerRef.current) {
-      setColumnState(calculateColumns(containerRef.current, gap));
-    }
-  }, [containerRef.current, windowWidth]);
+  /**
+   * The refs below needed to help useMemo to initialize values.
+   * Later I will replace useMemo with useState, and useRef won't be needed anymore.
+   */
+  const columnHeights = useRef<number[]>([]);
+  const processedItems = useRef<MasonryItemContainer<ItemT>[]>([]);
 
-  const items: MasonryItemContainer<ItemT>[] = useMemo(() => {
-    if (!columnCount || !columnWidth) return [];
-    return processItems(
-      itemsSrc,
-      columnCount,
-      columnWidth,
-      MASONRY_ROW_HEIGHT,
-      gap
-    );
+  const [newItems, newColumnHeights]: [
+    MasonryItemContainer<ItemT>[],
+    number[]
+  ] = useMemo(() => {
+    if (!columnCount || !columnWidth) return [[], []];
+
+    if (processedItems.current.length < itemsSrc.length) {
+      const [newProcessedItems, newColumnHeights] = processItems(
+        itemsSrc.slice(processedItems.current.length),
+        columnHeights.current,
+        columnCount,
+        columnWidth,
+        MASONRY_ROW_HEIGHT,
+        gap
+      );
+
+      return [
+        processedItems.current.concat(newProcessedItems),
+        newColumnHeights,
+      ];
+    } else {
+      const [newProcessedItems, newColumnHeights] = processItems(
+        itemsSrc.slice(0),
+        Array(columnCount).fill(1),
+        columnCount,
+        columnWidth,
+        MASONRY_ROW_HEIGHT,
+        gap
+      );
+
+      return [newProcessedItems, newColumnHeights];
+    }
   }, [itemsSrc, columnCount, columnWidth]);
+
+  columnHeights.current = newColumnHeights;
+  processedItems.current = newItems;
+
+  const items = processedItems.current; // Renaming here just to avoid renaming "items" everywhere else
 
   const handleScroll = ({ direction: scrollDirection }: ScrollState) => {
     const { newFirst, newAfterFirst, newBeforeLast, newLast } =
@@ -116,13 +145,18 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
     if (newLast !== last) $last.set(newLast);
   };
 
-  useScrollListener(handleScroll, 30);
+  useLayoutEffect(() => {
+    if (containerRef.current) {
+      const newColumnState = calculateColumns(containerRef.current, gap);
+      setColumnState(newColumnState);
+    }
+  }, [containerRef.current, windowWidth]);
+
+  const scrollState = useScrollListener(handleScroll, 30);
 
   useEffect(() => {
-    if (lastRef.current) {
-      handleScroll({ direction: "down", position: 0 });
-    }
-  }, [beforeLastRef.current, lastRef.current, handleScroll]);
+    handleScroll(scrollState);
+  }, [handleScroll]);
 
   useEffect(() => {
     if (last >= itemsCount - 1) {
@@ -133,8 +167,8 @@ export const MasonryLayout = <ItemT extends MasonryItem>({
   console.log("Masonry rendered", {
     itemsSrc,
     items,
-    columnWidth,
-    columnCount,
+    // columnWidth,
+    // columnCount,
     first,
     afterFirst,
     beforeLast,

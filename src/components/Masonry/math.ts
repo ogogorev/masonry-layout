@@ -181,32 +181,35 @@ export const calculateColumns = (gridNode: HTMLElement, gap: number) => {
   return { columnWidth, columnCount };
 };
 
+const getIndexOfMin = (array: number[]) => {
+  return array.indexOf(Math.min(...array));
+};
+
 export const processItems = <ItemT extends MasonryItem>(
   sourceItems: ItemT[],
+  columnHeights: number[],
   columnCount: number,
   columnWidth: number,
   rowHeight: number,
   gap: number
-) => {
-  const columns = Array(columnCount).fill(1);
-
-  const getMinColI = () => {
-    return columns.indexOf(Math.min(...columns));
-  };
+): [MasonryItemContainer<ItemT>[], number[]] => {
+  const newColumnHeights = columnHeights.length
+    ? [...columnHeights]
+    : Array(columnCount).fill(1);
 
   const newItems: MasonryItemContainer<ItemT>[] = [];
 
   sourceItems.forEach((item, i) => {
-    const minI = getMinColI();
+    const minI = getIndexOfMin(newColumnHeights);
     const gridCol = minI + 1;
-    const gridRowStart = columns[minI];
+    const gridRowStart = newColumnHeights[minI];
 
     const ratio = item.width / item.height;
     const height = columnWidth / ratio;
 
     const gridRowSpan = Math.ceil(height / rowHeight) + gap / rowHeight;
 
-    columns[minI] += gridRowSpan;
+    newColumnHeights[minI] += gridRowSpan;
 
     const gridRowEnd = gridRowStart + gridRowSpan;
 
@@ -223,5 +226,5 @@ export const processItems = <ItemT extends MasonryItem>(
     });
   });
 
-  return newItems;
+  return [newItems, newColumnHeights];
 };

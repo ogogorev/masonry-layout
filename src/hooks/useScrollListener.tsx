@@ -35,4 +35,6 @@ export const useScrollListener = (
       window.removeEventListener("scroll", listener);
     };
   });
+
+  return scrollState.current;
 };
