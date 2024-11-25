@@ -24,6 +24,10 @@ With this approach, the changes in DOM are batched, only four elements need refs
 
 I tried to get rid of the "after first" and "before last" elements and come up with a more elegant solution, but haven't had enough time to make it work.
 
+### Rendering optimizations
+
+To audit and optimize rendering speed when scrolling I used Performance tab in Chrome Dev Tools and React Profiler. I carefully analysed what components were rendered on state updates in Masonry and could speed up updates by memoizing Masonry Items. However the items that are becoming visible after adding next batch still have to be rendered, there is still some room for optimization. I could probably "flatten" some spikes by adding fewer items but more often. Unfortunately, there was not enough time to do such experiments.
+
 ### State
 
 I used a global state manager to preserve the state of Masonry component for back navigation. Nanostores is a small library that offers just enough features to achieve that. The state of masonry component is stored using a key: this allows using multiple Masonry components across the app, with each having its own global state.
