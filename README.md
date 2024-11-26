@@ -4,6 +4,8 @@
 2. Open repository folder `cd masonry-layout` and run `pnpm run demo`. It will install dependencies, build the app, and execute the vite's preview command.
 3. Open [http://localhost:4173/](http://localhost:4173/).
 
+**After submitting the task I continued working on it. I hesitate though to do big changes on this branch, so I created the `v2` branch. I would really appreciate if you would check out the `v2` branch instead.**
+
 # Solution
 
 Before I dive deeper into explaining my solution, I would like to discuss shortly my experience in the context of the task. This was the first time I implemented a masonry layout. After a quick research and some experiments I had to stick with one approach and try to make it work. What at the beginning seemed to be a good idea, later turned out as not the best option. However, due to the strict deadline, I had to move on and didn't really consider starting from scratch. Now I have other solutions in mind, and will probably try them out without the risk of ruining the whole challenge.
