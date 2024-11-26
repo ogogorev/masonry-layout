@@ -3,9 +3,15 @@ import { NavigateFunction } from "react-router-dom";
 import { styled } from "@linaria/react";
 
 import { PhotoData } from "../../api/pexels/types";
-import { PexelsPhoto } from "../Image/PexelsPhoto";
+import { generatePexelsPhotoUrl } from "../PexelsPhoto/utils";
 
-const PexelsPhotoStyled = styled(PexelsPhoto)`
+const AnchorStyled = styled.a`
+  display: block;
+  width: 100%;
+  max-height: 100%;
+`;
+
+const PhotoStyled = styled.img`
   width: 100%;
   border-radius: 8px;
 `;
@@ -34,7 +40,10 @@ const MasonryPhotoItemC: FC<MasonryPhotoItemProps> = ({
   return (
     // Using anchor tag here as Link to be rendered slower
     <AnchorStyled href="path" onClick={handleLinkClick}>
-      <PexelsPhotoStyled imageData={photoData} targetSize="medium" />
+      <PhotoStyled
+        src={generatePexelsPhotoUrl(photoData, 200)}
+        alt={photoData.alt}
+      />
     </AnchorStyled>
   );
 };
