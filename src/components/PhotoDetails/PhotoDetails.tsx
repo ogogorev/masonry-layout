@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { styled } from "@linaria/react";
 
-import { PexelsImage } from "../Image/PexelsImage";
+import { PexelsPhoto } from "../Image/PexelsPhoto";
 import { PhotoData } from "../../api/pexels/types";
 import { fetchPhoto } from "../../api/pexels/photos";
 import { PhotoInfo } from "./PhotoInfo";
@@ -78,7 +78,7 @@ export const PhotoDetails = () => {
           <>
             <PhotoInfo photoData={photoData} />
             <PhotoWrapper>
-              <PexelsImage imageData={photoData} />
+              <PexelsPhoto photoData={photoData} />
             </PhotoWrapper>
           </>
         )}

@@ -3,9 +3,9 @@ import { NavigateFunction } from "react-router-dom";
 import { styled } from "@linaria/react";
 
 import { PhotoData } from "../../api/pexels/types";
-import { PexelsImage } from "../Image/PexelsImage";
+import { PexelsPhoto } from "../Image/PexelsPhoto";
 
-const PexelsPhotoStyled = styled(PexelsImage)`
+const PexelsPhotoStyled = styled(PexelsPhoto)`
   width: 100%;
   border-radius: 8px;
 `;
